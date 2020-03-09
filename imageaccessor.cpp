@@ -5,7 +5,7 @@ ImageAccessor::ImageAccessor()
 {   
 }
 
-QVector<QVector<unsigned char>> ImageAccessor::GetMatrixFromImage(QString path)
+GrayScaleMatrix ImageAccessor::GetMatrixFromImage(QString path)
 {
     QImage inputImage;
     QVector<QVector<unsigned char>> imageMatrix;
@@ -29,12 +29,13 @@ QVector<QVector<unsigned char>> ImageAccessor::GetMatrixFromImage(QString path)
             }
         }
     }
-
-    return imageMatrix;
+    GrayScaleMatrix gsMatrix(imageMatrix);
+    return gsMatrix;
 }
 
-bool ImageAccessor::DrawImageFromMatrix(QVector<QVector<unsigned char>> imageMatrix, QString path)
+void ImageAccessor::DrawImageFromMatrix(GrayScaleMatrix gsMatrix, QString path)
 {
+    QVector<QVector<unsigned char>> imageMatrix = gsMatrix.GetMatrix255();
     QImage outputImage(imageMatrix.at(0).size(),imageMatrix.size(),QImage::Format_RGB32);
     for(int i=0; i<outputImage.width(); i++)
     {
@@ -45,5 +46,4 @@ bool ImageAccessor::DrawImageFromMatrix(QVector<QVector<unsigned char>> imageMat
         }
     }
     outputImage.save(path);
-    return true;
 }
