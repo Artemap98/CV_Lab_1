@@ -1,26 +1,22 @@
 #include "imageaccessor.h"
 
 
-ImageAccessor::ImageAccessor()
-{   
-}
-
 GrayScaleMatrix ImageAccessor::GetMatrixFromImage(QString path)
 {
-    QImage inputImage;
+    QImage inputImage1;
     QVector<QVector<unsigned char>> imageMatrix;
-    if(!inputImage.load(path))
+    if(inputImage1.load(path))
     {
-        inputImage = inputImage.convertToFormat(QImage::Format_RGB32);
+        QImage inputImage = inputImage1.convertToFormat(QImage::Format_RGB32);
         {
-            for(int i = 0; i < inputImage.width(); i++)
+            for(int i = 0; i < inputImage.height(); i++)
             {
                 QVector<unsigned char> pixelLine;
 
-                for(int j = 0; j < inputImage.height(); j++)
+                for(int j = 0; j < inputImage.width(); j++)
                 {
                     float brightness;
-                    QColor pColor = inputImage.pixelColor(i,j);
+                    QColor pColor = inputImage.pixelColor(j,i);
                     brightness = pColor.red()*0.299 + pColor.green()*0.587 + pColor.blue()*0.114;//0.213𝑅𝑅+0.715𝐺𝐺+0.072𝐵𝐵;
 
                     pixelLine.append(brightness);
@@ -37,12 +33,14 @@ void ImageAccessor::DrawImageFromMatrix(GrayScaleMatrix gsMatrix, QString path)
 {
     QVector<QVector<unsigned char>> imageMatrix = gsMatrix.GetMatrix255();
     QImage outputImage(imageMatrix.at(0).size(),imageMatrix.size(),QImage::Format_RGB32);
-    for(int i=0; i<outputImage.width(); i++)
+
+
+    for(int i=0; i<outputImage.height(); i++)
     {
-        for(int j=0; j<outputImage.height(); j++)
+        for(int j=0; j<outputImage.width(); j++)
         {
-            unsigned char grayShade = imageMatrix.at(i).at(j);
-            outputImage.setPixel(i,j,qRgb(grayShade,grayShade,grayShade));
+            unsigned char grayShade = imageMatrix[i][j];
+            outputImage.setPixel(j,i,qRgb(grayShade,grayShade,grayShade));
         }
     }
     outputImage.save(path);

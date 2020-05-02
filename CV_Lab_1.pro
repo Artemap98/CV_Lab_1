@@ -18,6 +18,7 @@ SOURCES += \
         convolution.cpp \
         grayscalematrix.cpp \
         imageaccessor.cpp \
+        lab1.cpp \
         main.cpp
 
 # Default rules for deployment.

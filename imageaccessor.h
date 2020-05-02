@@ -10,7 +10,6 @@
 class ImageAccessor
 {
 public:
-    ImageAccessor();
     static GrayScaleMatrix GetMatrixFromImage(QString path);
     static void DrawImageFromMatrix(GrayScaleMatrix imageMatrix, QString path);
 };

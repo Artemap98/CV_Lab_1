@@ -30,12 +30,28 @@ QVector<QVector<unsigned char>> GrayScaleMatrix::GetMatrix255()
     QVector<QVector<unsigned char>> resultMatrix;
     double width = imageMatrix[0].size();
     double height = imageMatrix.size();
-    for (int i = 0; i < height; i++) {
-        QVector<unsigned char> resiltLine;
-        for (int j = 0; j < width; j++) {
-            resiltLine.append(imageMatrix[j][i]*255);
+
+    double min=0,max=1;
+
+    //output data normalization
+    for(int i=0; i<imageMatrix.size(); i++)
+    {
+        for(int j=0; j<imageMatrix[0].size(); j++)
+        {
+            if(imageMatrix[i][j]>max)
+                max=imageMatrix[i][j];
+            if(imageMatrix[i][j]<min)
+                min=imageMatrix[i][j];
         }
-        resultMatrix.append(resiltLine);
+    }
+
+
+    for (int i = 0; i < height; i++) {
+        QVector<unsigned char> resultLine;
+        for (int j = 0; j < width; j++) {
+            resultLine.append((double)(imageMatrix[i][j]-min)*255/(max-min));
+        }
+        resultMatrix.append(resultLine);
     }
     return resultMatrix;
 }
@@ -53,11 +69,11 @@ void GrayScaleMatrix::SetMatrixDoubleFrom255(QVector<QVector<unsigned char>> inp
     double width = inputMatrix[0].size();
     double height = inputMatrix.size();
     for (int i = 0; i < height; i++) {
-        QVector<double> resiltLine;
+        QVector<double> resultLine;
         for (int j = 0; j < width; j++) {
-            resiltLine.append(inputMatrix[j][i]/255);
+            resultLine.append((double)inputMatrix[i][j]/255);
         }
-        resultMatrix.append(resiltLine);
+        resultMatrix.append(resultLine);
     }
     imageMatrix = resultMatrix;
 }
@@ -72,4 +88,15 @@ void GrayScaleMatrix::SetValue(int x, int y, double value)
 {
     imageMatrix[y][x] = value;
 }
+
+int GrayScaleMatrix::GetWidth()
+{
+    return imageMatrix[0].size();
+}
+
+int GrayScaleMatrix::GetHeight()
+{
+    return imageMatrix.size();
+}
+
 
