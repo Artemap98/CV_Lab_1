@@ -19,7 +19,9 @@ SOURCES += \
         grayscalematrix.cpp \
         imageaccessor.cpp \
         lab1.cpp \
-        main.cpp
+        lab2.cpp \
+        main.cpp \
+        scaleoperation.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -29,4 +31,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     convolution.h \
     grayscalematrix.h \
-    imageaccessor.h
+    imageaccessor.h \
+    scaleoperation.h

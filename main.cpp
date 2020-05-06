@@ -1,21 +1,25 @@
 #include <QtCore>
 #include <lab1.cpp>
-/*
-Лабораторная работа 1. Свертка
--Написать основу для представления изображений и их обработки свертками
--Реализовать вычисление частных производных и оператора Собеля
--Реализовать фильтр Гаусса
--Реализовать отображение полученных результатов
-NB! Нормирование выходных данных
-*/
+#include <lab2.cpp>
 
 
 int main()
 {
     //Path to folder, image name, sigma for Gauss filter
-    lab1("C:\\Users\\artem\\Desktop\\art\\pics\\","greetings-from-berlin.jpg",3);
-    lab1("C:\\Users\\artem\\Desktop\\art\\pics\\","chicken.jpg",5);
-    lab1("C:\\Users\\artem\\Desktop\\art\\pics\\","rabbit-on-a-train-detail.jpg",7);
+    //lab1("C:\\Users\\artem\\Desktop\\art\\","VYH01gMwyHw.jpg",1);
+    //lab1("C:\\Users\\artem\\Desktop\\art\\","MKWSqkFW3Z0.jpg",2);
+
+
+    lab2("C:\\Users\\artem\\Desktop\\art\\",    //Path to folder
+         "drive1",   //img name
+         ".jpg",    //extension
+         7,         //num of octaves
+         2,         //num of layers
+         0,         //sigmaA
+         1,         //sigma0
+         6.66       //sigmaL for L(x,y,sigma)
+         );
+
 
 
     return 0;

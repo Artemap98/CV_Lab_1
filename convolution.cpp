@@ -1,7 +1,6 @@
 #include "convolution.h"
 
 
-
 GrayScaleMatrix Convolution::Convolute(GrayScaleMatrix inputGSMatrix, QVector<QVector<double>> convCore)
 {
 //    int coreW = static_cast<int>(core[0].count() / 2);
@@ -78,26 +77,6 @@ GrayScaleMatrix Convolution::Convolute(GrayScaleMatrix inputGSMatrix, QVector<QV
             outputMatrix.SetValue(j,i,sum);
         }
     }
-
-
-//    double min=0, max=1;
-//    for(int i=0; i<outputMatrix.GetHeight(); i++)
-//    {
-//        for(int j=0; j<outputMatrix.GetWidth(); j++)
-//        {
-//            if(outputMatrix.GetValue(j,i)>max)
-//                max=outputMatrix.GetValue(j,i);
-//            if(outputMatrix.GetValue(j,i)<min)
-//                outputMatrix.GetValue(j,i);
-//        }
-//    }
-//    for(int i=0; i<outputMatrix.GetHeight(); i++)
-//    {
-//        for(int j=0; j<outputMatrix.GetWidth(); j++)
-//        {
-//            outputMatrix.SetValue(j,i,(outputMatrix.GetValue(j,i)-min)/(max-min));
-//        }
-//    }
 
     return outputMatrix;
 }
@@ -179,15 +158,15 @@ GrayScaleMatrix Convolution::GaussianFilter(GrayScaleMatrix inputGSMatrix,double
 {
     QVector<QVector<double> > core; //ядро свертки
 
-    int sigmaHalf = static_cast<int>(sigma) * 3;
-    if (sigmaHalf  % 2 == 0)
-        ++sigmaHalf;
+    int sigmaInt = static_cast<int>(sigma) * 3;
+    if (sigmaInt  % 2 == 0)
+        sigmaInt++;
     double coeff = 2 * sigma * sigma;
 
-    for (int i = -sigmaHalf; i <= sigmaHalf; i++)
+    for (int i = -sigmaInt; i <= sigmaInt; i++)
     {
         QVector<double> str;
-        for (int j = -sigmaHalf; j <= sigmaHalf; j++)
+        for (int j = -sigmaInt; j <= sigmaInt; j++)
         {
             str.append(exp( -(i * i + j * j) / coeff) / (M_PI * coeff));
         }
