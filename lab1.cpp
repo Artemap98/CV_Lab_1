@@ -1,6 +1,7 @@
 #include "imageaccessor.h"
 #include "grayscalematrix.h"
 #include "convolution.h"
+#include <QDir>
 #include <QString>
 #include <iostream>
 
@@ -14,8 +15,14 @@ NB! Нормирование выходных данных
 */
 void lab1(QString path, QString fileName, double sigma)
 {
+
     std::cout<<"load img..."<<std::endl;
     GrayScaleMatrix origMatr = ImageAccessor::GetMatrixFromImage(path+fileName);
+
+    QDir dir;
+    path = path+"lab1"+fileName+"\\";
+    dir.mkdir(path);
+
     std::cout<<"save orig grayscale img..."<<std::endl;
     ImageAccessor::DrawImageFromMatrix(origMatr,path+"orig_"+fileName);
 

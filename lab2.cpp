@@ -21,7 +21,7 @@
 void lab2(QString path, QString fileName, QString extension, int numOfOctaves, int numOfLayers, double sigmaA, double sigma0, double sigmaL)
 {
     QDir dir;
-    QString pyramidPath = path+fileName+"\\";
+    QString pyramidPath = path+"lab2"+fileName+"\\";
     dir.mkdir(pyramidPath);
     std::cout<<"load img..."<<std::endl;
     GrayScaleMatrix inputmatrix = ImageAccessor::GetMatrixFromImage(path+fileName+extension);
