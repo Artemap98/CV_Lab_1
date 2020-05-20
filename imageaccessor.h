@@ -11,7 +11,8 @@ class ImageAccessor
 {
 public:
     static GrayScaleMatrix GetMatrixFromImage(QString path);
-    static void DrawImageFromMatrix(GrayScaleMatrix imageMatrix, QString path);
+    static void DrawImageFromMatrix(GrayScaleMatrix gsMatrix, QString path);
+    static QImage GetImageFromMatrix(GrayScaleMatrix gsMatrix);
 };
 
 #endif // IMAGEACCESSOR_H

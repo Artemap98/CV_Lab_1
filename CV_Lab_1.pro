@@ -17,11 +17,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         KeyFeatures.cpp \
         convolution.cpp \
+        descriptor.cpp \
+        descriptorworker.cpp \
         grayscalematrix.cpp \
         imageaccessor.cpp \
         lab1.cpp \
         lab2.cpp \
         lab3.cpp \
+        lab4.cpp \
         main.cpp \
         scaleoperation.cpp
 
@@ -33,6 +36,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     KeyFeatures.h \
     convolution.h \
+    descriptor.h \
+    descriptorworker.h \
     grayscalematrix.h \
     imageaccessor.h \
     scaleoperation.h

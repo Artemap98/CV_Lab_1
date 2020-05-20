@@ -14,6 +14,7 @@ public:
     QVector<QVector<double>> GetMatrixDouble();
 
     void SetMatrixDoubleFrom255(QVector<QVector<unsigned char>> inputMatrix);
+    void SetMatrixDouble(QVector<QVector<double>> inputMatrix);
 
     double GetValue(int x, int y);
     void SetValue(int x, int y, double value);

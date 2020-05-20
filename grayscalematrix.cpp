@@ -81,11 +81,18 @@ void GrayScaleMatrix::SetMatrixDoubleFrom255(QVector<QVector<unsigned char>> inp
 
 double GrayScaleMatrix::GetValue(int x, int y)
 {
-    return imageMatrix.at(y).at(x);
+    int i, j;
+    i = x <= 0 ? 0 : (x >= imageMatrix[0].size() - 1 ? imageMatrix[0].size() - 1 : x);
+    j = y <= 0 ? 0 : (y >= imageMatrix.size() - 1 ? imageMatrix.size() - 1 : y);
+    return imageMatrix[j][i];
 }
 
 void GrayScaleMatrix::SetValue(int x, int y, double value)
 {
+    if(x < 0 || y < 0 || x >= imageMatrix[0].size() || y >= imageMatrix.size())
+    {
+        return;
+    }
     imageMatrix[y][x] = value;
 }
 
@@ -99,4 +106,8 @@ int GrayScaleMatrix::GetHeight()
     return imageMatrix.size();
 }
 
+void GrayScaleMatrix::SetMatrixDouble(QVector<QVector<double>> inputMatrix)
+{
+    imageMatrix = inputMatrix;
+}
 

@@ -27,12 +27,12 @@ void lab1(QString path, QString fileName, double sigma)
     ImageAccessor::DrawImageFromMatrix(origMatr,path+"orig_"+fileName);
 
     std::cout<<"compute derivateX..."<<std::endl;
-    GrayScaleMatrix derivateX = Convolution::GetDerivateX(origMatr);
+    GrayScaleMatrix derivateX = Convolution::DerivateX(origMatr);
     std::cout<<"save derivateX img..."<<std::endl;
     ImageAccessor::DrawImageFromMatrix(derivateX,path+"derivateX_"+fileName);
 
     std::cout<<"compute derivateY..."<<std::endl;
-    GrayScaleMatrix derivateY = Convolution::GetDerivateY(origMatr);
+    GrayScaleMatrix derivateY = Convolution::DerivateY(origMatr);
     std::cout<<"save derivateY img..."<<std::endl;
     ImageAccessor::DrawImageFromMatrix(derivateY,path+"derivateY_"+fileName);
 

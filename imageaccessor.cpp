@@ -45,3 +45,20 @@ void ImageAccessor::DrawImageFromMatrix(GrayScaleMatrix gsMatrix, QString path)
     }
     outputImage.save(path);
 }
+
+QImage ImageAccessor::GetImageFromMatrix(GrayScaleMatrix gsMatrix)
+{
+    QVector<QVector<unsigned char>> imageMatrix = gsMatrix.GetMatrix255();
+    QImage outputImage(imageMatrix.at(0).size(),imageMatrix.size(),QImage::Format_RGB32);
+
+
+    for(int i=0; i<outputImage.height(); i++)
+    {
+        for(int j=0; j<outputImage.width(); j++)
+        {
+            unsigned char grayShade = imageMatrix[i][j];
+            outputImage.setPixel(j,i,qRgb(grayShade,grayShade,grayShade));
+        }
+    }
+    return outputImage;
+}

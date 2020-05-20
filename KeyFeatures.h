@@ -28,9 +28,10 @@ public:
     };
 
     static GrayScaleMatrix GetMoravecMatrix(GrayScaleMatrix inputGSMatrix, int windowRadius);
-    static GrayScaleMatrix GetPointsMoravec(GrayScaleMatrix inputGSMatrix, GrayScaleMatrix moravecMatrix, int windowRadius, int resultPointsNum);
+    static GrayScaleMatrix GetResultMoravec(GrayScaleMatrix inputGSMatrix, GrayScaleMatrix moravecMatrix, int windowRadius, int resultPointsNum);
     static GrayScaleMatrix GetHarrisMatrix(GrayScaleMatrix inputGSMatrix, int windowRadius);
-    static GrayScaleMatrix GetPointsHarris(GrayScaleMatrix inputGSMatrix, GrayScaleMatrix moravecMatrix, int windowRadius, int resultPointsNum);
+    static KeyPointSet GetPointsHarris(GrayScaleMatrix inputGSMatrix, GrayScaleMatrix moravecMatrix, int windowRadius, int resultPointsNum);
+    static GrayScaleMatrix GetResultHarrisMatrix(GrayScaleMatrix inputGSMatrix, KeyPointSet interestingPoints);
     static KeyPointSet GetLocalMaximums(GrayScaleMatrix harrisMatrix, int windowRadius, bool isHarris);
     static KeyPointSet ReducePoints(KeyPointSet points, int resultPointsNum, int maxRadius);
 

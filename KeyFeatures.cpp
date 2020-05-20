@@ -44,7 +44,7 @@ GrayScaleMatrix KeyFeatures::GetMoravecMatrix(GrayScaleMatrix inputGSMatrix, int
     return moravecMatrix;
 }
 
-GrayScaleMatrix KeyFeatures::GetPointsMoravec(GrayScaleMatrix inputGSMatrix, GrayScaleMatrix moravecMatrix, int windowRadius, int resultPointsNum)
+GrayScaleMatrix KeyFeatures::GetResultMoravec(GrayScaleMatrix inputGSMatrix, GrayScaleMatrix moravecMatrix, int windowRadius, int resultPointsNum)
 {
     qDebug() << "--GetPointsMoravec(GrayScaleMatrix inputGSMatrix, GrayScaleMatrix moravecMatrix, int windowRadius, int resultPointsNum)";
     KeyPointSet interestingPoints = GetLocalMaximums(moravecMatrix, windowRadius, false);
@@ -74,13 +74,13 @@ GrayScaleMatrix KeyFeatures::GetPointsMoravec(GrayScaleMatrix inputGSMatrix, Gra
 }
 
 //получить локальные максимумы
-KeyFeatures::KeyPointSet KeyFeatures::GetLocalMaximums(GrayScaleMatrix moravecMatrix, int windowRadius, bool isHarris)
+KeyFeatures::KeyPointSet KeyFeatures::GetLocalMaximums(GrayScaleMatrix inputMatrix, int windowRadius, bool isHarris)
 {
     qDebug() << "--GetLocalMaximums(GrayScaleMatrix moravecMatrix, int windowRadius, bool isHarris)";
     KeyPointSet points;
 
-    int w = moravecMatrix.GetWidth();
-    int h = moravecMatrix.GetHeight();
+    int w = inputMatrix.GetWidth();
+    int h = inputMatrix.GetHeight();
 
     //находим мин и макс для порога
     double  min = std::numeric_limits <double>::max(),
@@ -89,7 +89,7 @@ KeyFeatures::KeyPointSet KeyFeatures::GetLocalMaximums(GrayScaleMatrix moravecMa
     {
          for(int j = 0; j < w; j++)
          {
-             double temp = moravecMatrix.GetValue(j,i);
+             double temp = inputMatrix.GetValue(j,i);
             if (max < temp) max = temp;
             if (min > temp) min = temp;
         }
@@ -102,16 +102,16 @@ KeyFeatures::KeyPointSet KeyFeatures::GetLocalMaximums(GrayScaleMatrix moravecMa
 
 
     //добавляем точки в список, только если они сильнейшие в своей окрестности
-    for (int i = windowRadius; i < h-windowRadius; i++)
+    for (int i = 0; i < h; i++)
     {
-        for (int j = windowRadius; j < w-windowRadius; j++)
+        for (int j = 0; j < w; j++)
         {
             bool is_correct = true;
-            double sLocal = moravecMatrix.GetValue(j,i);
+            double sLocal = inputMatrix.GetValue(j,i);
             for (int px = -windowRadius; px <= windowRadius && is_correct; px++) {
                 for (int py = -windowRadius; py <= windowRadius && is_correct; py++) {
                     if (px != 0 || py != 0) {
-                        is_correct = sLocal > moravecMatrix.GetValue(j+px,i+py);
+                        is_correct = sLocal > inputMatrix.GetValue(j+px,i+py);
                     }
                 }
             }
@@ -133,13 +133,13 @@ KeyFeatures::KeyPointSet KeyFeatures::ReducePoints(KeyFeatures::KeyPointSet poin
 
     double minDist = std::numeric_limits <double>::max();
 
-    //строим треугольную матрицу дистанций между всеми точками
-    //и матрицу отношений "больше" для локальных коэффициентов
+    //строим матрицу дистанций между всеми точками
+    //и  матрицу отношений "больше" для локальных коэффициентов
     for(int i=0; i < points.keyPoints.size(); i++)
     {
         QVector<double> distanceRow;
         QVector<bool> sLocalGreaterRow;
-        for(int j= i + 1; j < points.keyPoints.size(); j++)
+        for(int j= 0; j < points.keyPoints.size(); j++)
         {
             double xd = points.keyPoints[i].x - points.keyPoints[j].x;
             double yd = points.keyPoints[i].y - points.keyPoints[j].y;
@@ -159,45 +159,111 @@ KeyFeatures::KeyPointSet KeyFeatures::ReducePoints(KeyFeatures::KeyPointSet poin
     //пока точек слишком много и радиус в пределах допустимого
     while (points.keyPoints.size() > resultPointsNum && r < maxRadius)
     {
-        int matrixSize = points.keyPoints.size();
-        for(int i=0; i < matrixSize; i++)
+        for(int i=0; i< distanceMatrix.size(); i++)
         {
-            for(int j= i + 1; j < matrixSize; j++)
+            for(int j=0; j<distanceMatrix[i].size(); j++)
             {
-                //если новая точка в радиусе и у нее больше коэффициент
-                if(distanceMatrix[i][j-i-1] <= r && sLocalGreaterMatrix[i][j-i-1])
+                if(distanceMatrix[i][j] <= r && i!=j)
                 {
-                    //удаляем строку и столбец "плохой" ключевой точки
-
-                    for(int ii=0; ii < i; ii++)
+                    if(sLocalGreaterMatrix[i][j])
                     {
-                        distanceMatrix[ii].remove(i-ii);
-                        sLocalGreaterMatrix[ii].remove(i-ii);
+                        for(int ii=0; ii < i; ii++)
+                        {
+                            distanceMatrix[ii].remove(i);
+                            sLocalGreaterMatrix[ii].remove(i);
+                        }
+                        distanceMatrix.remove(i);
+                        sLocalGreaterMatrix.remove(i);
+                        points.keyPoints.remove(i);
+                        i--;
+                        break;
                     }
-                    distanceMatrix.remove(i);
-                    sLocalGreaterMatrix.remove(i);
-                    points.keyPoints.remove(i);
-                    i--;
-                    matrixSize--;
-                    break;
                 }
             }
         }
-        qDebug() << "--radius = " << r << "; num of key points = " << points.keyPoints.size();
         r++;
+        qDebug() << "--radius = " << r << "; num of key points = " << points.keyPoints.size();
     }
 
+//    //строим треугольную матрицу дистанций между всеми точками
+//    //и треугольную матрицу отношений "больше" для локальных коэффициентов
+//    QVector<int> distCount = QVector<int>(2000);
+//    for(int i=0; i < points.keyPoints.size(); i++)
+//    {
+//        QVector<double> distanceRow;
+//        QVector<bool> sLocalGreaterRow;
+//        for(int j= i + 1; j < points.keyPoints.size(); j++)
+//        {
+//            double xd = points.keyPoints[i].x - points.keyPoints[j].x;
+//            double yd = points.keyPoints[i].y - points.keyPoints[j].y;
+//            double dist = sqrt(xd * xd + yd * yd);
+
+//            if(dist < minDist) minDist = dist;
+
+//            distCount[floor(dist)]++;
+//            distanceRow.append(dist);
+//            sLocalGreaterRow.append(points.keyPoints[i].sLocal <= points.keyPoints[j].sLocal);
+//        }
+//        distanceMatrix.append(distanceRow);
+//        sLocalGreaterMatrix.append(sLocalGreaterRow);
+//    }
+
+//    int r = std::ceil(minDist);
+
+//    //пока точек слишком много и радиус в пределах допустимого
+//    while (points.keyPoints.size() > resultPointsNum && r < maxRadius)
+//    {
+//        for(int i=0; i< distanceMatrix.size(); i++)
+//        {
+//            for(int j=0; j<distanceMatrix[i].size(); j++)
+//            {
+//                if(distanceMatrix[i][j] <= r)
+//                {
+//                    if(sLocalGreaterMatrix[i][j])
+//                    {
+//                        for(int ii=0; ii < i; ii++)
+//                        {
+//                            distanceMatrix[ii].remove(i-ii);
+//                            sLocalGreaterMatrix[ii].remove(i-ii);
+//                        }
+//                        distanceMatrix.remove(i);
+//                        sLocalGreaterMatrix.remove(i);
+//                        points.keyPoints.remove(i);
+//                        i--;
+//                        break;
+//                    }
+////                    else
+////                    {
+////                        int jLocal = i+j+1;
+////                        for(int ii=0; ii < jLocal; ii++)
+////                        {
+////                            distanceMatrix[ii].remove(jLocal-1-ii);
+////                            sLocalGreaterMatrix[ii].remove(jLocal-1-ii);
+////                        }
+////                        distanceMatrix.remove(jLocal);
+////                        sLocalGreaterMatrix.remove(jLocal);
+////                        points.keyPoints.remove(jLocal);
+////                        j--;
+////                    }
+//                }
+//            }
+//        }
+//        r++;
+//        qDebug() << "--radius = " << r << "; num of key points = " << points.keyPoints.size();
+//    }
     return points;
 }
 
 
 GrayScaleMatrix KeyFeatures::GetHarrisMatrix(GrayScaleMatrix inputGSMatrix, int windowRadius)
 {
-    inputGSMatrix = Convolution::GaussianFilter(inputGSMatrix, 1.3); //немного сглаживаем
+    qDebug() << "--GetHarrisMatrix(GrayScaleMatrix inputGSMatrix, int windowRadius)";
+
+    inputGSMatrix = Convolution::GaussianFilter(inputGSMatrix, 1.3);
 
     //находим производные
-    GrayScaleMatrix derivateX = Convolution::GetDerivateX(inputGSMatrix);
-    GrayScaleMatrix derivateY = Convolution::GetDerivateY(inputGSMatrix);
+    GrayScaleMatrix derivateX = Convolution::DerivateX(inputGSMatrix);
+    GrayScaleMatrix derivateY = Convolution::DerivateY(inputGSMatrix);
 
     int w = inputGSMatrix.GetWidth();
     int h = inputGSMatrix.GetHeight();
@@ -207,7 +273,7 @@ GrayScaleMatrix KeyFeatures::GetHarrisMatrix(GrayScaleMatrix inputGSMatrix, int 
                                 c;
 
     //находим веса для окна - ядро Гаусса
-    double sigma = static_cast<double>(windowRadius*2+1) / 6;
+    double sigma = static_cast<double>(windowRadius*2) / 6;
     QVector<QVector<double>>gaussKernel;
 
     double coeff = 1 / (2 * M_PI * sigma * sigma);
@@ -224,10 +290,10 @@ GrayScaleMatrix KeyFeatures::GetHarrisMatrix(GrayScaleMatrix inputGSMatrix, int 
     }
 
     //Вычисляем A, B, C для всех точек
-    for (int i = windowRadius; i < h-windowRadius; i++)
+    for (int i = 0; i < h; i++)
     {
         QVector<double> aRow,bRow,cRow;
-         for (int j = windowRadius; j < w-windowRadius; j++)
+         for (int j = 0; j < w; j++)
          {
             double sumA = 0, sumB = 0, sumC = 0;
 
@@ -254,10 +320,10 @@ GrayScaleMatrix KeyFeatures::GetHarrisMatrix(GrayScaleMatrix inputGSMatrix, int 
 
     GrayScaleMatrix harrisMatrix(w,h);   //здесь будем хранить значения оператора
 
-    for (int i = windowRadius; i < h-windowRadius; i++) {
-        for (int j = windowRadius; j < w-windowRadius; j++) {
-            double sc = a[i-windowRadius][j-windowRadius] + c[i-windowRadius][j-windowRadius];
-            double d = a[i-windowRadius][j-windowRadius] * c[i-windowRadius][j-windowRadius] - b[i-windowRadius][j-windowRadius] * b[i-windowRadius][j-windowRadius];
+    for (int i =0; i < h; i++) {
+        for (int j =0; j < w; j++) {
+            double sc = a[i][j] + c[i][j];
+            double d = a[i][j] * c[i][j] - b[i][j] * b[i][j];
             double det = sc * sc - 4 * d;
             double L1 = (sc + sqrt(det)) / 2;
             double L2 = (sc - sqrt(det)) / 2;
@@ -270,17 +336,22 @@ GrayScaleMatrix KeyFeatures::GetHarrisMatrix(GrayScaleMatrix inputGSMatrix, int 
 }
 
 
-GrayScaleMatrix KeyFeatures::GetPointsHarris(GrayScaleMatrix inputGSMatrix, GrayScaleMatrix harrisMatrix, int windowRadius, int resultPointsNum)
+KeyFeatures::KeyPointSet KeyFeatures::GetPointsHarris(GrayScaleMatrix inputGSMatrix, GrayScaleMatrix harrisMatrix, int windowRadius, int resultPointsNum)
 {
     qDebug() << "--GetPointsHarris(GrayScaleMatrix inputGSMatrix, GrayScaleMatrix moravecMatrix, int windowRadius, int resultPointsNum)";
-    KeyPointSet interestingPoints = GetLocalMaximums(harrisMatrix, windowRadius, true);
+    KeyPointSet interestingPoints = GetLocalMaximums(harrisMatrix, 2, true);
 
     int w = inputGSMatrix.GetWidth();
     int h = inputGSMatrix.GetHeight();
 
     interestingPoints = ReducePoints(interestingPoints, resultPointsNum, std::min(w/2,h/2));
 
+    return interestingPoints;
+}
 
+
+GrayScaleMatrix KeyFeatures::GetResultHarrisMatrix(GrayScaleMatrix inputGSMatrix, KeyPointSet interestingPoints)
+ {
     foreach (KeyPoint point, interestingPoints.keyPoints)
     {
         for(int i=-1; i<=1; i++)
@@ -298,7 +369,5 @@ GrayScaleMatrix KeyFeatures::GetPointsHarris(GrayScaleMatrix inputGSMatrix, Gray
         }
     }
     return inputGSMatrix;
-
-
 }
 
