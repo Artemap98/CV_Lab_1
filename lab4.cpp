@@ -20,19 +20,14 @@ void lab4(QString path,
     QDir dir;
     QString labPath = path+"lab4"+fileName1+fileName2+"\\";
     dir.mkdir(labPath);
-
     std::cout<<"load img1..."<<std::endl;
     GrayScaleMatrix inputMatrix1 = ImageAccessor::GetMatrixFromImage(path+fileName1+extension1);
     std::cout<<"load img2..."<<std::endl;
     GrayScaleMatrix inputMatrix2 = ImageAccessor::GetMatrixFromImage(path+fileName2+extension2);
-
-
     std::cout<<"compute descriptor1..."<<std::endl;
     QVector<Descriptor> descriptors1 = DescriptorWorker::GetDescriptorsFromImage(inputMatrix1, harrisRadius, harrisPointsNum, basketNum, histogramGridSize, descriptorSize);
     std::cout<<"compute descriptor2..."<<std::endl;
     QVector<Descriptor> descriptors2 = DescriptorWorker::GetDescriptorsFromImage(inputMatrix2, harrisRadius, harrisPointsNum, basketNum, histogramGridSize, descriptorSize);
-
-
     QImage result = DescriptorWorker::GetTwoImageDescriptorComparsion(inputMatrix1,descriptors1,inputMatrix2,descriptors2);
     result.save(labPath+"result.png");
     std::cout<<"done"<<std::endl;

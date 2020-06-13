@@ -28,8 +28,10 @@ GrayScaleMatrix KeyFeatures::GetMoravecMatrix(GrayScaleMatrix inputGSMatrix, int
                     if(ix!=0 && iy!=0)
                     {
                         double sum = 0;
-                        for (int u = -windowRadius; u <= windowRadius; u++) {
-                            for (int v = -windowRadius; v <= windowRadius; v++) {
+                        for (int u = -windowRadius; u <= windowRadius; u++)
+                        {
+                            for (int v = -windowRadius; v <= windowRadius; v++)
+                            {
                                 double tmp =  inputGSMatrix.GetValue(j,i) - inputGSMatrix.GetValue(j+ix+u,i+iy+v);
                                 sum += tmp * tmp;
                             }
@@ -145,7 +147,7 @@ KeyFeatures::KeyPointSet KeyFeatures::ReducePoints(KeyFeatures::KeyPointSet poin
             double yd = points.keyPoints[i].y - points.keyPoints[j].y;
             double dist = sqrt(xd * xd + yd * yd);
 
-            if(dist < minDist) minDist = dist;
+            if(dist < minDist && i!=j) minDist = dist;
 
             distanceRow.append(dist);
             sLocalGreaterRow.append(points.keyPoints[i].sLocal <= points.keyPoints[j].sLocal);
@@ -155,102 +157,52 @@ KeyFeatures::KeyPointSet KeyFeatures::ReducePoints(KeyFeatures::KeyPointSet poin
     }
 
     int r = std::ceil(minDist);
-
+    QVector<bool> deletedPoints = QVector<bool>(points.keyPoints.size());
+    int deletedNum = 0;
+    qDebug() << "--radius = " << r << "; num of key points = " << points.keyPoints.size()-deletedNum;
     //пока точек слишком много и радиус в пределах допустимого
-    while (points.keyPoints.size() > resultPointsNum && r < maxRadius)
+    while (points.keyPoints.size()-deletedNum > resultPointsNum && r < maxRadius)
     {
         for(int i=0; i< distanceMatrix.size(); i++)
         {
-            for(int j=0; j<distanceMatrix[i].size(); j++)
+            if(!deletedPoints[i])
             {
-                if(distanceMatrix[i][j] <= r && i!=j)
+                for(int j=0; j<distanceMatrix[i].size(); j++)
                 {
-                    if(sLocalGreaterMatrix[i][j])
+                    if(!deletedPoints[j])
                     {
-                        for(int ii=0; ii < i; ii++)
+                        if(distanceMatrix[i][j] <= r && i!=j)
                         {
-                            distanceMatrix[ii].remove(i);
-                            sLocalGreaterMatrix[ii].remove(i);
+
+                            if(sLocalGreaterMatrix[i][j])
+                            {
+                                deletedPoints[i] = true;
+                                deletedNum++;
+                                i--;
+                                break;
+                            }
+                            else
+                            {
+                                deletedPoints[j] = true;
+                                deletedNum++;
+                                if(j<i) i--;
+                                j--;
+
+                            }
                         }
-                        distanceMatrix.remove(i);
-                        sLocalGreaterMatrix.remove(i);
-                        points.keyPoints.remove(i);
-                        i--;
-                        break;
                     }
                 }
             }
         }
         r++;
-        qDebug() << "--radius = " << r << "; num of key points = " << points.keyPoints.size();
+        qDebug() << "--radius = " << r << "; num of key points = " << points.keyPoints.size()-deletedNum;
+    }
+    for(int i=deletedPoints.size()-1; i >= 0 ; i--)
+    {
+        if(deletedPoints[i])
+            points.keyPoints.remove(i);
     }
 
-//    //строим треугольную матрицу дистанций между всеми точками
-//    //и треугольную матрицу отношений "больше" для локальных коэффициентов
-//    QVector<int> distCount = QVector<int>(2000);
-//    for(int i=0; i < points.keyPoints.size(); i++)
-//    {
-//        QVector<double> distanceRow;
-//        QVector<bool> sLocalGreaterRow;
-//        for(int j= i + 1; j < points.keyPoints.size(); j++)
-//        {
-//            double xd = points.keyPoints[i].x - points.keyPoints[j].x;
-//            double yd = points.keyPoints[i].y - points.keyPoints[j].y;
-//            double dist = sqrt(xd * xd + yd * yd);
-
-//            if(dist < minDist) minDist = dist;
-
-//            distCount[floor(dist)]++;
-//            distanceRow.append(dist);
-//            sLocalGreaterRow.append(points.keyPoints[i].sLocal <= points.keyPoints[j].sLocal);
-//        }
-//        distanceMatrix.append(distanceRow);
-//        sLocalGreaterMatrix.append(sLocalGreaterRow);
-//    }
-
-//    int r = std::ceil(minDist);
-
-//    //пока точек слишком много и радиус в пределах допустимого
-//    while (points.keyPoints.size() > resultPointsNum && r < maxRadius)
-//    {
-//        for(int i=0; i< distanceMatrix.size(); i++)
-//        {
-//            for(int j=0; j<distanceMatrix[i].size(); j++)
-//            {
-//                if(distanceMatrix[i][j] <= r)
-//                {
-//                    if(sLocalGreaterMatrix[i][j])
-//                    {
-//                        for(int ii=0; ii < i; ii++)
-//                        {
-//                            distanceMatrix[ii].remove(i-ii);
-//                            sLocalGreaterMatrix[ii].remove(i-ii);
-//                        }
-//                        distanceMatrix.remove(i);
-//                        sLocalGreaterMatrix.remove(i);
-//                        points.keyPoints.remove(i);
-//                        i--;
-//                        break;
-//                    }
-////                    else
-////                    {
-////                        int jLocal = i+j+1;
-////                        for(int ii=0; ii < jLocal; ii++)
-////                        {
-////                            distanceMatrix[ii].remove(jLocal-1-ii);
-////                            sLocalGreaterMatrix[ii].remove(jLocal-1-ii);
-////                        }
-////                        distanceMatrix.remove(jLocal);
-////                        sLocalGreaterMatrix.remove(jLocal);
-////                        points.keyPoints.remove(jLocal);
-////                        j--;
-////                    }
-//                }
-//            }
-//        }
-//        r++;
-//        qDebug() << "--radius = " << r << "; num of key points = " << points.keyPoints.size();
-//    }
     return points;
 }
 

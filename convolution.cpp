@@ -13,7 +13,7 @@ GrayScaleMatrix Convolution::Convolute(GrayScaleMatrix inputGSMatrix, QVector<QV
     int workingHeight = inputGSMatrix.GetHeight() + coreHeight * 2;
 
     //расширяем изображение на размер ядра
-//    double *imageWorking = new double [widthWorking * heightWorking]; //расширенное рабочее изображение
+    //расширенное рабочее изображение
     GrayScaleMatrix workMatrix(workingWidth,workingHeight);
 
 
@@ -48,11 +48,11 @@ GrayScaleMatrix Convolution::Convolute(GrayScaleMatrix inputGSMatrix, QVector<QV
         {
             double sum = 0; //результат свертки для одной точки
 
-            for (int u = 0; u < ySize; u++)//для каждого ряда в ядре
+            for (int u = -coreHeight; u <= coreHeight; u++)//для каждого ряда в ядре
             {
-                for (int v = 0; v < xSize; v++)  //для каждого значения в ряду
+                for (int v = -coreWidth; v <= coreWidth; v++)  //для каждого значения в ряду
                 {
-                    sum += workMatrix.GetValue(j-v+xSize-1, i - u +ySize-1) * convCore[u][v];
+                    sum += workMatrix.GetValue(j - v + coreWidth, i - u + coreHeight) * convCore[u+coreHeight][v+coreWidth];
                 }
             }
             outputMatrix.SetValue(j,i,sum);
@@ -61,27 +61,6 @@ GrayScaleMatrix Convolution::Convolute(GrayScaleMatrix inputGSMatrix, QVector<QV
 
     return outputMatrix;
 }
-
-
-QVector<QVector<double>> Convolution::MatrixMult(QVector<QVector<double>> matrix1, QVector<QVector<double>> matrix2)
-{
-
-    QVector<QVector<double>> resultMatrix;
-    for(int i = 0; i<matrix1.size(); i++)
-    {
-        QVector<double> matrixRow;
-        for(int j=0; j<matrix2[0].size(); j++)
-        {
-            double elementSum=0;
-            for(int k =0; k<matrix1.size(); k++)
-            {
-                elementSum += matrix1[i][k]*matrix2[k][j];
-            }
-        }
-    }
-    return resultMatrix;
-}
-
 
 
 GrayScaleMatrix Convolution::DerivateX(GrayScaleMatrix inputGSMatrix) //получить массивы с частными производными
@@ -159,6 +138,7 @@ GrayScaleMatrix Convolution::GaussianFilter(GrayScaleMatrix inputGSMatrix,double
 //        }
 //        core.append(str);
 //    }
+//    return Convolute(inputGSMatrix, core);
 
     QVector<QVector<double> > core; //ядро свертки
     QVector<QVector<double> > core1;
@@ -171,7 +151,7 @@ GrayScaleMatrix Convolution::GaussianFilter(GrayScaleMatrix inputGSMatrix,double
     QVector<double> str;
     for (int j = -sigmaInt; j <= sigmaInt; j++)
     {
-        str.append(exp( -(j * j) / coeff) / (M_PI * coeff));
+        str.append(exp( -(j * j) / coeff) / sqrt((M_PI * coeff)));
     }
     core.append(str);
 
@@ -180,11 +160,12 @@ GrayScaleMatrix Convolution::GaussianFilter(GrayScaleMatrix inputGSMatrix,double
     for (int j = -sigmaInt; j <= sigmaInt; j++)
     {
         QVector<double> str1;
-        str1.append(exp( -(j * j) / coeff) / (M_PI * coeff));
-        core1.append(str);
+        str1.append(exp( -(j * j) / coeff) / sqrt((M_PI * coeff)));
+        core1.append(str1);
     }
 
     return Convolute(workMatr, core1); //непосредственно вычисляем
+
 }
 
 GrayScaleMatrix Convolution::GradientDirection(GrayScaleMatrix derivateXMatrix, GrayScaleMatrix derivateYMatrix)
@@ -196,7 +177,10 @@ GrayScaleMatrix Convolution::GradientDirection(GrayScaleMatrix derivateXMatrix, 
     {
         for(int j=0; j<width; j++)
         {
-            outputGSMatrix.SetValue(j,i, atan2(derivateYMatrix.GetValue(j,i), derivateXMatrix.GetValue(j,i)) * 180 / M_PI + 180);
+            outputGSMatrix.SetValue(j,i,
+                                    atan2(derivateYMatrix.GetValue(j,i),
+                                          derivateXMatrix.GetValue(j,i))
+                                    * 180 / M_PI + 180);
         }
 
     }

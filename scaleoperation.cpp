@@ -30,23 +30,22 @@ ScaleOperation::Pyramid ScaleOperation::GetPyramid(GrayScaleMatrix inputMatrix, 
     double sigmaB = sqrt(sigma0 * sigma0 - sigmaA * sigmaA);    //с каким сигма нужно сгладить, чтобы получить с требуемым sigma0
     outputMatrix = Convolution::GaussianFilter(inputMatrix,sigmaB);
 
-
-    double actSigma = sigma0;
+    double actSigma = sigma0;//действительная сигма для октав
     GrayScaleMatrix currMatrix = outputMatrix;
-
     for(int i = 0; i < numOfOctaves; i++)
     {
-        double currSigma = sigma0;
+        double currSigma = sigma0;//локальная сигма в октаве
+        double sigmaKoeff = sigma0;
         Octave currOctave;   //создаем новую октаву
-        Layer currLayer(currMatrix,currSigma,actSigma);
+        Layer currLayer(currMatrix,currSigma,actSigma);//нулевой слой, равный уменьшенному последнему из предыдущей октавы
         currOctave.layers.append(currLayer);
-
         for (int j = 1; j < numOfLayers; j++)
         {
-
             currSigma *= scaleInterval;
             actSigma *= scaleInterval;
-            currMatrix = Convolution::GaussianFilter(currMatrix, currSigma);
+            //находим коэфф., с которым нужно сгладить, чтобы получить требуемую сиигму
+            sigmaKoeff = sqrt(currSigma*currSigma - sigmaKoeff*sigmaKoeff);
+            currMatrix = Convolution::GaussianFilter(currMatrix, sigmaKoeff);
             currLayer.matrix = currMatrix;
             currLayer.currentSigma = currSigma;
             currLayer.actualSigma = actSigma;
@@ -57,7 +56,6 @@ ScaleOperation::Pyramid ScaleOperation::GetPyramid(GrayScaleMatrix inputMatrix, 
         if (i < numOfOctaves - 1)
             currMatrix =  Downsample(currMatrix);
     }
-
     return outputPyramid;
 }
 
@@ -67,6 +65,7 @@ double ScaleOperation::GetL(ScaleOperation::Pyramid inputPyramid, int x, int y, 
     Layer targetLayer = inputPyramid.octaves[0].layers[0];
     int     octaveLevel = 0,
             octaveCount = 0;
+    //находим октаву и уровень, на котором сигма будет наиболее близка к искомой
     foreach(Octave currOctave, inputPyramid.octaves)
     {
         foreach(Layer currLayer, currOctave.layers)
@@ -80,9 +79,10 @@ double ScaleOperation::GetL(ScaleOperation::Pyramid inputPyramid, int x, int y, 
         octaveCount++;
     }
 
-    int ynew = static_cast<int>(y / pow(2., octaveLevel)); //учитываем, что на следующих октавах изображения меньше по размеру
+    //учитываем, что на следующих октавах изображения меньше по размеру
+    int ynew = static_cast<int>(y / pow(2., octaveLevel));
     int xnew = static_cast<int>(x / pow(2., octaveLevel));
-    if(xnew >= targetLayer.matrix.GetWidth()) xnew = targetLayer.matrix.GetWidth()-1;//ОПА КАСТЫЛИК
+    if(xnew >= targetLayer.matrix.GetWidth()) xnew = targetLayer.matrix.GetWidth()-1;
     if(ynew >= targetLayer.matrix.GetHeight()) ynew = targetLayer.matrix.GetHeight()-1;
     return targetLayer.matrix.GetValue(xnew,ynew);
 }

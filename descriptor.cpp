@@ -25,6 +25,30 @@ Descriptor::Descriptor(int basketNum, int histogramSize, int descriptorSize, int
 }
 
 
+void Descriptor::NormalizeDescriptor()
+{
+    for(int k=0; k<2; k++)
+    {
+        double length=0;
+
+        for(int i =0; i<pointDescriptor.size(); i++)
+            for(int j=0; j<pointDescriptor[i].size(); j++)
+                length+= pointDescriptor[i][j]*pointDescriptor[i][j];
+
+        length = sqrt(length);
+
+        for(int i =0; i<pointDescriptor.size(); i++)
+            for(int j=0; j<pointDescriptor[i].size(); j++)
+            {
+                pointDescriptor[i][j] /= length;
+
+                if(pointDescriptor[i][j] > 0.2 && k==0)
+                    pointDescriptor[i][j]=0.2;
+            }
+    }
+}
+
+
 double Descriptor::GetBasket(int histogramNum, int basketNum)
 {
     return pointDescriptor[histogramNum][basketNum];
@@ -66,25 +90,4 @@ int Descriptor::GetY()
     return y;
 }
 
-void Descriptor::NormalizeDescriptor()
-{
-    for(int k=0; k<2; k++)
-    {
-        double length=0;
 
-        for(int i =0; i<pointDescriptor.size(); i++)
-            for(int j=0; j<pointDescriptor[i].size(); j++)
-                length+= pointDescriptor[i][j]*pointDescriptor[i][j];
-
-        length = sqrt(length);
-
-        for(int i =0; i<pointDescriptor.size(); i++)
-            for(int j=0; j<pointDescriptor[i].size(); j++)
-            {
-                pointDescriptor[i][j] /= length;
-
-                if(pointDescriptor[i][j] > 0.2 && k==0)
-                    pointDescriptor[i][j]=0.2;
-            }
-    }
-}

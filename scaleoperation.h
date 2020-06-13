@@ -1,15 +1,11 @@
-#ifndef GAUSSPIRAMYDE_H
-#define GAUSSPIRAMYDE_H
-
 #include "grayscalematrix.h"
 #include "convolution.h"
-
-
 
 class ScaleOperation
 {
 public:
     ScaleOperation();
+    static GrayScaleMatrix Downsample(GrayScaleMatrix inputMatrix);
 
     struct Layer{
         GrayScaleMatrix matrix;
@@ -31,10 +27,9 @@ public:
         QVector<Octave> octaves;
     };
 
-    static GrayScaleMatrix Downsample(GrayScaleMatrix inputMatrix);
-    static Pyramid GetPyramid(GrayScaleMatrix inputMatrix, int octaveNum, int levelNum, double sigmaA, double sigma0);
+
+    static Pyramid GetPyramid(GrayScaleMatrix inputMatrix, int octaveNum, int levelNum, double sigmaA, double sigma0); 
     static double GetL(ScaleOperation::Pyramid inputPyramid, int y, int x, double sigma);
 
 };
 
-#endif // GAUSSPIRAMYDE_H
