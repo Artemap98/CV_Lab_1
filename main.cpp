@@ -53,8 +53,19 @@ int main()
 //    lab2("C:\\Users\\artem\\Desktop\\art\\",    //Path to folder
 //         "drive1",   //img name
 //         ".jpg",    //extension
-//         2,         //num of octaves
-//         8,         //num of layers
+//         3,         //num of octaves
+//         3,         //num of layers
+//         0,         //sigmaA
+//         1,         //sigma0
+//         2.28       //sigmaL for L(x,y,sigma)
+//         );
+
+//    std::cout<<std::endl<<"test 3"<<std::endl<<std::endl;
+//    lab2("C:\\Users\\artem\\Desktop\\art\\",    //Path to folder
+//         "drive11",   //img name
+//         ".jpg",    //extension
+//         3,         //num of octaves
+//         10,         //num of layers
 //         0,         //sigmaA
 //         1,         //sigma0
 //         2.28       //sigmaL for L(x,y,sigma)
@@ -126,11 +137,11 @@ int main()
 //         );
 
 //    std::cout<<std::endl<<"lab 5"<<std::endl<<std::endl;
-//    std::cout<<std::endl<<"test 1"<<std::endl<<std::endl;
+//    std::cout<<std::endl<<"test 0"<<std::endl<<std::endl;
 //    lab5("C:\\Users\\artem\\Desktop\\art\\",    //Path to folder
 //         "lena",   //img1 name
 //         ".jpg",     //extension1
-//         "lena5",   //img2 name
+//         "lena",   //img2 name
 //         ".jpg",     //extension2
 //         3,          //harris window size
 //         800,        //num of points
@@ -139,20 +150,8 @@ int main()
 //         4           //num of histograms
 //         );
 
-    std::cout<<std::endl<<"test 2"<<std::endl<<std::endl;
-    lab5("C:\\Users\\artem\\Desktop\\art\\",    //Path to folder
-         "luffy",   //img1 name
-         ".png",     //extension1
-         "luffy5",   //img2 name
-         ".png",     //extension2
-         3,          //harris window size
-         600,        //num of points
-         8,          //num of baskets
-         4,          //grid size for one histogram
-         4           //num of histograms
-         );
 
-//    std::cout<<std::endl<<"test 3"<<std::endl<<std::endl;
+//    std::cout<<std::endl<<"test 1"<<std::endl<<std::endl;
 //    lab5("C:\\Users\\artem\\Desktop\\art\\",    //Path to folder
 //         "drive1",   //img1 name
 //         ".jpg",     //extension1
@@ -160,6 +159,101 @@ int main()
 //         ".jpg",     //extension2
 //         3,          //harris window size
 //         400,        //num of points
+//         8,          //num of baskets
+//         16,          //grid size for one histogram
+//         4           //num of histograms
+//         );
+
+    std::cout<<std::endl<<"test 2"<<std::endl<<std::endl;
+    lab5("C:\\Users\\artem\\Desktop\\art\\",    //Path to folder
+         "lena",   //img1 name
+         ".jpg",     //extension1
+         "lena17",   //img2 name
+         ".jpg",     //extension2
+         3,          //harris window size
+         400,        //num of points
+         8,          //num of baskets
+         8,          //grid size for one histogram
+         4           //num of histograms
+         );
+
+    std::cout<<std::endl<<"test 3"<<std::endl<<std::endl;
+    lab5("C:\\Users\\artem\\Desktop\\art\\",    //Path to folder
+         "lena",   //img1 name
+         ".jpg",     //extension1
+         "lena-42",   //img2 name
+         ".jpg",     //extension2
+         3,          //harris window size
+         400,        //num of points
+         8,          //num of baskets
+         8,          //grid size for one histogram
+         4           //num of histograms
+         );
+
+    std::cout<<std::endl<<"test 4"<<std::endl<<std::endl;
+    lab5("C:\\Users\\artem\\Desktop\\art\\",    //Path to folder
+         "lena",   //img1 name
+         ".jpg",     //extension1
+         "lena-55",   //img2 name
+         ".jpg",     //extension2
+         3,          //harris window size
+         400,        //num of points
+         8,          //num of baskets
+         8,          //grid size for one histogram
+         4           //num of histograms
+         );
+
+    std::cout<<std::endl<<"test 5"<<std::endl<<std::endl;
+    lab5("C:\\Users\\artem\\Desktop\\art\\",    //Path to folder
+         "lena",   //img1 name
+         ".jpg",     //extension1
+         "lena-90",   //img2 name
+         ".jpg",     //extension2
+         3,          //harris window size
+         400,        //num of points
+         8,          //num of baskets
+         8,          //grid size for one histogram
+         4           //num of histograms
+         );
+
+//    std::cout<<std::endl<<"test 5"<<std::endl<<std::endl;
+//    lab5("C:\\Users\\artem\\Desktop\\art\\",    //Path to folder
+//         "drive1",   //img1 name
+//         ".jpg",     //extension1
+//         "drive180",   //img2 name
+//         ".jpg",     //extension2
+//         3,          //harris window size
+//         400,        //num of points
+//         8,          //num of baskets
+//         16,          //grid size for one histogram
+//         4           //num of histograms
+//         );
+
+
+
+
+//    std::cout<<std::endl<<"test 2"<<std::endl<<std::endl;
+//    lab5("C:\\Users\\artem\\Desktop\\art\\",    //Path to folder
+//         "lena",   //img1 name
+//         ".jpg",     //extension1
+//         "lena5",   //img2 name
+//         ".jpg",     //extension2
+//         3,          //harris window size
+//         800,        //num of points
+//         8,          //num of baskets
+//         16,          //grid size for one histogram
+//         4           //num of histograms
+//         );
+
+
+//    std::cout<<std::endl<<"test 3"<<std::endl<<std::endl;
+//    lab5("C:\\Users\\artem\\Desktop\\art\\",    //Path to folder
+//         "luffy",   //img1 name
+//         ".png",     //extension1
+//         "luffy5",   //img2 name
+//         ".png",     //extension2
+//         3,          //harris window size
+//         600,        //num of points
 //         8,          //num of baskets
 //         4,          //grid size for one histogram
 //         4           //num of histograms

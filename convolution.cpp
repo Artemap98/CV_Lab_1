@@ -1,64 +1,26 @@
 #include "convolution.h"
+#include <QDebug>
 
 
 GrayScaleMatrix Convolution::Convolute(GrayScaleMatrix inputGSMatrix, QVector<QVector<double>> convCore)
 {
-//    int coreW = static_cast<int>(core[0].count() / 2);
-//    int coreH = static_cast<int>(core.count() / 2);
 
-    int coreWidth = convCore[0].size() / 2;
-    int coreHeight = convCore.size() / 2;
+    int xRadius = convCore[0].size() / 2;
+    int yRadius = convCore.size() / 2;
 
-    int workingWidth = inputGSMatrix.GetWidth() + coreWidth * 2;    //ширина и высота расширенного, рабочего изображения
-    int workingHeight = inputGSMatrix.GetHeight() + coreHeight * 2;
+    int width = inputGSMatrix.GetWidth();
+    int height = inputGSMatrix.GetHeight();
 
-    //расширяем изображение на размер ядра
-    //расширенное рабочее изображение
-    GrayScaleMatrix workMatrix(workingWidth,workingHeight);
-
-
-    //Заполняем рабочее изображение
-    for (int i = -coreHeight; i < workingHeight - coreHeight; i++)
-    {
-        for (int j = 0-coreWidth; j < workingWidth-coreWidth; j++)
-        {
-            //точки за пределами исходного изображения приравниваем граничным
-            workMatrix.SetValue(j+coreWidth,i+coreHeight,inputGSMatrix.GetValue(j,i));
-        }
-    }
-
-    int xSize = convCore[0].size();
-    int ySize = convCore.size();
-
-    //вычисляем сумму элементов ядра
-    double coreSum = 0;
-    for (int x = 0; x < xSize; ++x) {
-        for (int y = 0; y < ySize; ++y) {
-            coreSum += convCore[y][x];
-        }
-    }
-
-    GrayScaleMatrix outputMatrix(inputGSMatrix.GetWidth(),inputGSMatrix.GetHeight());
-    int     width = outputMatrix.GetWidth(),
-            height = outputMatrix.GetHeight();
-    //применяем свертку
+    GrayScaleMatrix outputMatrix(width,height);
     for (int i = 0; i < height; i++)
-    {//все строки
         for (int j = 0; j < width; j++)
         {
             double sum = 0; //результат свертки для одной точки
-
-            for (int u = -coreHeight; u <= coreHeight; u++)//для каждого ряда в ядре
-            {
-                for (int v = -coreWidth; v <= coreWidth; v++)  //для каждого значения в ряду
-                {
-                    sum += workMatrix.GetValue(j - v + coreWidth, i - u + coreHeight) * convCore[u+coreHeight][v+coreWidth];
-                }
-            }
+            for (int u = -yRadius; u <= yRadius; u++)//для каждого ряда в ядре
+                for (int v = -xRadius; v <= xRadius; v++)  //для каждого значения в ряду
+                    sum += inputGSMatrix.GetValue(j - v, i - u) * convCore[u+yRadius][v+xRadius];
             outputMatrix.SetValue(j,i,sum);
         }
-    }
-
     return outputMatrix;
 }
 
@@ -140,6 +102,7 @@ GrayScaleMatrix Convolution::GaussianFilter(GrayScaleMatrix inputGSMatrix,double
 //    }
 //    return Convolute(inputGSMatrix, core);
 
+    //qDebug()<< "--Gauss. sigma = " << sigma;
     QVector<QVector<double> > core; //ядро свертки
     QVector<QVector<double> > core1;
 
@@ -149,21 +112,26 @@ GrayScaleMatrix Convolution::GaussianFilter(GrayScaleMatrix inputGSMatrix,double
     double coeff = 2 * sigma * sigma;
 
     QVector<double> str;
+    double coreSum = 0;
     for (int j = -sigmaInt; j <= sigmaInt; j++)
     {
-        str.append(exp( -(j * j) / coeff) / sqrt((M_PI * coeff)));
+        double gaussValue = exp( -(j * j) / coeff) / sqrt((M_PI * coeff));
+        coreSum+= gaussValue;
+        str.append(gaussValue);
+        QVector<double> str1;
+        str1.append(gaussValue);
+        core1.append(str1);
     }
     core.append(str);
 
-    GrayScaleMatrix workMatr = Convolute(inputGSMatrix, core);
-
     for (int j = -sigmaInt; j <= sigmaInt; j++)
     {
-        QVector<double> str1;
-        str1.append(exp( -(j * j) / coeff) / sqrt((M_PI * coeff)));
-        core1.append(str1);
+        core[0][j+sigmaInt]/= coreSum;
+        core1[j+sigmaInt][0]/= coreSum;
     }
 
+
+    GrayScaleMatrix workMatr = Convolute(inputGSMatrix, core);
     return Convolute(workMatr, core1); //непосредственно вычисляем
 
 }

@@ -1,4 +1,5 @@
 #include "scaleoperation.h"
+#include <QDebug>
 
 ScaleOperation::ScaleOperation()
 {
@@ -35,16 +36,18 @@ ScaleOperation::Pyramid ScaleOperation::GetPyramid(GrayScaleMatrix inputMatrix, 
     for(int i = 0; i < numOfOctaves; i++)
     {
         double currSigma = sigma0;//локальная сигма в октаве
-        double sigmaKoeff = sigma0;
+
         Octave currOctave;   //создаем новую октаву
         Layer currLayer(currMatrix,currSigma,actSigma);//нулевой слой, равный уменьшенному последнему из предыдущей октавы
         currOctave.layers.append(currLayer);
-        for (int j = 1; j < numOfLayers; j++)
+        for (int j = 1; j <= numOfLayers; j++)
         {
+            double sigmaKoeff = currSigma;
             currSigma *= scaleInterval;
             actSigma *= scaleInterval;
-            //находим коэфф., с которым нужно сгладить, чтобы получить требуемую сиигму
+            //находим коэфф., с которым нужно сгладить, чтобы получить требуемую сигму
             sigmaKoeff = sqrt(currSigma*currSigma - sigmaKoeff*sigmaKoeff);
+            qDebug()<<"scaleInterval="<<scaleInterval<<"; currSigma="<< currSigma<<"; sigmaKoeff" << sigmaKoeff;
             currMatrix = Convolution::GaussianFilter(currMatrix, sigmaKoeff);
             currLayer.matrix = currMatrix;
             currLayer.currentSigma = currSigma;
