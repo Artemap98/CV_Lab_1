@@ -31,7 +31,7 @@ QVector<QVector<unsigned char>> GrayScaleMatrix::GetMatrix255()
     double width = imageMatrix[0].size();
     double height = imageMatrix.size();
 
-    double min=0,max=1;
+    double min=1000000,max=-1000000;
 
     //output data normalization
     for(int i=0; i<imageMatrix.size(); i++)
@@ -54,6 +54,33 @@ QVector<QVector<unsigned char>> GrayScaleMatrix::GetMatrix255()
         resultMatrix.append(resultLine);
     }
     return resultMatrix;
+}
+
+
+void GrayScaleMatrix::NormalizeDouble()
+{
+    int width = imageMatrix[0].size();
+    int height = imageMatrix.size();
+
+    double min=1,max=0;
+
+    for(int i=0; i<imageMatrix.size(); i++)
+    {
+        for(int j=0; j<imageMatrix[0].size(); j++)
+        {
+            if(imageMatrix[i][j]>max)
+                max=imageMatrix[i][j];
+            if(imageMatrix[i][j]<min)
+                min=imageMatrix[i][j];
+        }
+    }
+
+    //нормализация выходных данных
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            imageMatrix[i][j] = (imageMatrix[i][j]-min)/(max-min);
+        }
+    }
 }
 
 

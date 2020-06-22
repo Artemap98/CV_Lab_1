@@ -9,7 +9,7 @@ public:
     GrayScaleMatrix(int width, int height);
     GrayScaleMatrix(QVector<QVector<double>> newMatrix);
     GrayScaleMatrix(QVector<QVector<unsigned char>> newMatrix);
-
+    void NormalizeDouble();
     QVector<QVector<unsigned char>> GetMatrix255();
     QVector<QVector<double>> GetMatrixDouble();
 

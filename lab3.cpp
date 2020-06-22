@@ -26,6 +26,7 @@ void lab3(QString path, QString fileName, QString extension,int windowRadius, in
     std::cout<<"compute harris response..."<<std::endl;
     GrayScaleMatrix harrisMatrix = KeyFeatures::GetHarrisMatrix(inputMatrix, windowRadius);
     std::cout<<"draw harris matrix..."<<std::endl;
+    harrisMatrix.NormalizeDouble();
     ImageAccessor::DrawImageFromMatrix(harrisMatrix,labPath+"harrisResponse"+extension);
 
     std::cout<<"compute harris points (may take a couple of minutes)..."<<std::endl;
@@ -39,6 +40,7 @@ void lab3(QString path, QString fileName, QString extension,int windowRadius, in
     std::cout<<"compute moravec response..."<<std::endl;
     GrayScaleMatrix moravecMatrix = KeyFeatures::GetMoravecMatrix(inputMatrix, windowRadius);
     std::cout<<"draw moravec matrix..."<<std::endl;
+    moravecMatrix.NormalizeDouble();
     ImageAccessor::DrawImageFromMatrix(moravecMatrix,labPath+"moravecResponse"+extension);
 
     std::cout<<"compute moravec points (may take a couple of minutes)..."<<std::endl;

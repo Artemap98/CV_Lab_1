@@ -231,14 +231,23 @@ GrayScaleMatrix KeyFeatures::GetHarrisMatrix(GrayScaleMatrix inputGSMatrix, int 
     double coeff = 1 / (2 * M_PI * sigma * sigma);
     double delitel = 2 * sigma * sigma;
 
+    double gaussSum = 0;
     for (int u = -windowRadius; u <= windowRadius; u++)
     {
         QVector<double> gaussRow;
         for (int v = -windowRadius; v <= windowRadius; v++)
         {
-            gaussRow.append(coeff * exp(- (u * u + v * v) / delitel));
+            double gaussVal = coeff * exp(- (u * u + v * v) / delitel);
+            gaussSum += gaussVal;
+            gaussRow.append(gaussVal);
         }
         gaussKernel.append(gaussRow);
+    }
+
+    foreach(QVector<double> gaussRow , gaussKernel)
+    {
+        foreach(double value, gaussRow)
+            value /= gaussSum;
     }
 
     //Вычисляем A, B, C для всех точек
@@ -291,7 +300,7 @@ GrayScaleMatrix KeyFeatures::GetHarrisMatrix(GrayScaleMatrix inputGSMatrix, int 
 KeyFeatures::KeyPointSet KeyFeatures::GetPointsHarris(GrayScaleMatrix inputGSMatrix, GrayScaleMatrix harrisMatrix, int windowRadius, int resultPointsNum)
 {
     qDebug() << "--GetPointsHarris(GrayScaleMatrix inputGSMatrix, GrayScaleMatrix moravecMatrix, int windowRadius, int resultPointsNum)";
-    KeyPointSet interestingPoints = GetLocalMaximums(harrisMatrix, 2, true);
+    KeyPointSet interestingPoints = GetLocalMaximums(harrisMatrix, windowRadius, true);
 
     int w = inputGSMatrix.GetWidth();
     int h = inputGSMatrix.GetHeight();
