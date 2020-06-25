@@ -108,15 +108,5 @@ void Descriptor::addValueToBasket(int histogramNum, int basketNum, double value)
 }
 
 
-int Descriptor::GetX()
-{
-    return x;
-}
-
-
-int Descriptor::GetY()
-{
-    return y;
-}
 
 

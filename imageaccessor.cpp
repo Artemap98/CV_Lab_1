@@ -62,3 +62,16 @@ QImage ImageAccessor::GetImageFromMatrix(GrayScaleMatrix gsMatrix)
     }
     return outputImage;
 }
+
+GrayScaleMatrix ImageAccessor::PrintDescriptorOnImage(GrayScaleMatrix inputGSMatrix, QVector<Descriptor> descriptors)
+{
+    foreach(Descriptor descr, descriptors)
+    {
+        for(int i=-1; i<=1; i++)
+            for(int j=-1; j<=1; j++)
+                if(i==0 || j==0)
+                    inputGSMatrix.SetValue(descr.GetX()+j,descr.GetY()+i,1);
+
+    }
+    return  inputGSMatrix;
+}

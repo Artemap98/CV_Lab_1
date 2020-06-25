@@ -1,9 +1,5 @@
-//Реализовать относительную инвариантность вычисления дескрипторов
-//    к вращению изображений на основе подхода SIFT.
-//Реализовать этап оценки ориентации интересной точки и поворота сетки,
-//    в которой вычисляются гистограммы градиентов.
-//Оценить полученный алгоритм с точки зрения реакции на соответствующие искажения изображений,
-//сравнить с полученным в четвертой работе.
+//Реализовать распределение значений градиентов по смежным гистограммам,
+//добавить весовые коэффициенты исходя из расстояния до соответствующих центров.
 
 
 #include "descriptorworker.h"
@@ -11,7 +7,7 @@
 #include <iostream>
 #include <QDir>
 
-void lab5(QString path,
+void lab7(QString path,
           QString fileName1, QString extension1,
           QString fileName2, QString extension2,
           int harrisRadius,
@@ -21,7 +17,7 @@ void lab5(QString path,
           int descriptorSize)
 {
     QDir dir;
-    QString labPath = path+"lab5"+fileName1+fileName2+"\\";
+    QString labPath = path+"lab6"+fileName1+fileName2+"\\";
     dir.mkdir(labPath);
     std::cout<<"load img1..."<<std::endl;
     GrayScaleMatrix inputMatrix1 = ImageAccessor::GetMatrixFromImage(path+fileName1+extension1);
@@ -29,12 +25,12 @@ void lab5(QString path,
     GrayScaleMatrix inputMatrix2 = ImageAccessor::GetMatrixFromImage(path+fileName2+extension2);
 
     std::cout<<"compute descriptor1..."<<std::endl;
-    QVector<Descriptor> descriptors1 = DescriptorWorker::GetDescriptorsWithRotation(inputMatrix1, harrisRadius, harrisPointsNum, basketNum, histogramGridSize, descriptorSize);
+    QVector<Descriptor> descriptors1 = DescriptorWorker::GetDescriptorsBlob(inputMatrix1, harrisRadius, harrisPointsNum, basketNum, histogramGridSize, descriptorSize);
     GrayScaleMatrix descrImage1 = ImageAccessor::PrintDescriptorOnImage(inputMatrix1,descriptors1);
     ImageAccessor::DrawImageFromMatrix(descrImage1,labPath+fileName1+"points"+extension1);
 
     std::cout<<"compute descriptor2..."<<std::endl;
-    QVector<Descriptor> descriptors2 = DescriptorWorker::GetDescriptorsWithRotation(inputMatrix2, harrisRadius, harrisPointsNum, basketNum, histogramGridSize, descriptorSize);
+    QVector<Descriptor> descriptors2 = DescriptorWorker::GetDescriptorsBlob(inputMatrix2, harrisRadius, harrisPointsNum, basketNum, histogramGridSize, descriptorSize);
     GrayScaleMatrix descrImage2 = ImageAccessor::PrintDescriptorOnImage(inputMatrix2,descriptors2);
     ImageAccessor::DrawImageFromMatrix(descrImage2,labPath+fileName2+"points"+extension2);
 

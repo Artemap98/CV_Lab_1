@@ -26,8 +26,11 @@ SOURCES += \
         lab3.cpp \
         lab4.cpp \
         lab5.cpp \
+        lab6.cpp \
+        lab7.cpp \
         main.cpp \
-        scaleoperation.cpp
+        scaleoperation.cpp \
+        tests.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

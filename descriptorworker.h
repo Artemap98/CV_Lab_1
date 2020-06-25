@@ -23,6 +23,21 @@ public:
                                                            int histogramGridSize,
                                                            int descriptorSize);
 
+    //получить дескриптор, стойкий к наклонам
+    static QVector<Descriptor> GetDescriptorsBlob(GrayScaleMatrix inputGSMatrix,
+                                                   int harrisRadius,
+                                                   int harrisPointsNum,
+                                                   int basketNum,
+                                                   int histogramGridSize,
+                                                   int descriptorSize);
+
+    static QVector<Descriptor> GetDescriptorsFromOneLayer(GrayScaleMatrix gradientDirection,
+                                                          GrayScaleMatrix gradientMagnitude,
+                                                          KeyFeatures::KeyPointSet harrisPoints,
+                                                          int basketNum,
+                                                          int histogramGridSize,
+                                                          int descriptorSize);
+
     //определить угол каждой интересной точки
     static KeyFeatures::KeyPointSet OrientPoints(KeyFeatures::KeyPointSet inputPoints,
                                                  GrayScaleMatrix gradientDirection,

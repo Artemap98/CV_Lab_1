@@ -161,7 +161,7 @@ KeyFeatures::KeyPointSet KeyFeatures::ReducePoints(KeyFeatures::KeyPointSet poin
     int deletedNum = 0;
     qDebug() << "--radius = " << r << "; num of key points = " << points.keyPoints.size()-deletedNum;
     //пока точек слишком много и радиус в пределах допустимого
-    while (points.keyPoints.size()-deletedNum > resultPointsNum && r < maxRadius)
+    while (points.keyPoints.size()-deletedNum > resultPointsNum && r < maxRadius && resultPointsNum > 0)
     {
         for(int i=0; i< distanceMatrix.size(); i++)
         {
@@ -209,7 +209,7 @@ KeyFeatures::KeyPointSet KeyFeatures::ReducePoints(KeyFeatures::KeyPointSet poin
 
 GrayScaleMatrix KeyFeatures::GetHarrisMatrix(GrayScaleMatrix inputGSMatrix, int windowRadius)
 {
-    qDebug() << "--GetHarrisMatrix(GrayScaleMatrix inputGSMatrix, int windowRadius)";
+    //qDebug() << "--GetHarrisMatrix(GrayScaleMatrix inputGSMatrix, int windowRadius)";
 
     inputGSMatrix = Convolution::GaussianFilter(inputGSMatrix, 1.3);
 

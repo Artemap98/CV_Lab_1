@@ -13,8 +13,10 @@ public:
     void SetHistogram(int histogramNum, QVector<double> histogram);
     void SetBasket(int histogramNum, int basketNum, double value);
     void addValueToBasket(int histogramNum, int basketNum, double value); // прибавить значение к выбранной корзине
-    int GetX();
-    int GetY();
+    int GetX(){return x;};
+    int GetY(){return y;};
+    void SetX(int value){x = value;};
+    void SetY(int value){y = value;};
     int GetBasketNum(){return basketNum;}
     int GetHistogramGridSize(){return histogramGridSize;}
     int GetDescriptorSize(){return descriptorSize;}

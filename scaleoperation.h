@@ -25,10 +25,20 @@ public:
 
     struct Pyramid{
         QVector<Octave> octaves;
+        int overlay = 0;
     };
 
 
-    static Pyramid GetPyramid(GrayScaleMatrix inputMatrix, int octaveNum, int levelNum, double sigmaA, double sigma0); 
+    static Pyramid GetPyramid(GrayScaleMatrix inputMatrix,
+                              int numOfOctaves, int numOfLayers,
+                              double sigmaA, double sigma0
+                              );
+    static Pyramid GetPyramidWithOverlay(GrayScaleMatrix inputMatrix,
+                                         int numOfOctaves, int numOfLayers,
+                                         double sigmaA, double sigma0,
+                                         int overlay = 3
+                                         ) ;
+    static Pyramid GetDoGPyramid(Pyramid inputPyramid);
     static double GetL(ScaleOperation::Pyramid inputPyramid, int y, int x, double sigma);
 
 };

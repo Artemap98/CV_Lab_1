@@ -1,5 +1,6 @@
 #include "descriptorworker.h"
 #include "imageaccessor.h"
+#include "scaleoperation.h"
 #include <QPainter>
 #include <QtAlgorithms>
 #define NNDR_NUM 0.8
@@ -175,7 +176,7 @@ QImage DescriptorWorker::GetTwoImageDescriptorComparsion(
     QImage resultImage(ImageAccessor::GetImageFromMatrix(resultGSMatrix));
 
     QPainter painter (&resultImage);
-    painter.setPen(QColor(255, 255, 255, 200));
+    painter.setPen(QColor(40, 255, 240, 170));
     int w = inputGSMatrix1.GetWidth();
 
     QVector<QVector<double>> distMatrix;
@@ -566,8 +567,9 @@ KeyFeatures::KeyPointSet DescriptorWorker::OrientPoints(KeyFeatures::KeyPointSet
     return orientedPoints;
 }
 
-/*
-QVector<Descriptor> DescriptorWorker::GetDescriptorsWithRotation(GrayScaleMatrix inputGSMatrix,
+
+
+QVector<Descriptor> DescriptorWorker::GetDescriptorsBlob(GrayScaleMatrix inputGSMatrix,
                                                                  int harrisRadius,
                                                                  int harrisPointsNum,
                                                                  int basketNum,
@@ -575,14 +577,187 @@ QVector<Descriptor> DescriptorWorker::GetDescriptorsWithRotation(GrayScaleMatrix
                                                                  int descriptorSize)
 {
     QVector<Descriptor> imageDescriptor;
+    qDebug()<<"getting Gauss pyramid";
+    ScaleOperation::Pyramid DoGPyramid;
+    ScaleOperation::Pyramid inputPyramid = ScaleOperation::GetPyramidWithOverlay(inputGSMatrix,3,5,0,1.6);
+    qDebug()<<"getting DoG pyramid";
+    //для каждого уровня в каждой октаве находим значения Difference of Gaussian
+    for(int i = 0; i < inputPyramid.octaves.size(); i++)
+    {
+        qDebug()<<"-octave "<< i;
+        ScaleOperation::Octave currOctave;
+        currOctave.level = i;
+        //идем до предпоследнего элемента, т.к. из текущего слоя вычитаем значение следующего
+        for(int j = 0; j < inputPyramid.octaves[i].layers.size()-1; j++)
+        {
+            qDebug()<<"--layer "<< j;
+            ScaleOperation::Layer currLayer = inputPyramid.octaves[i].layers[j];
+            ScaleOperation::Layer nextLayer = inputPyramid.octaves[i].layers[j+1];
+//            currLayer.actualSigma = sqrt(currLayer.actualSigma * currLayer.actualSigma
+//                                         + nextLayer.actualSigma*nextLayer.actualSigma);
+//            currLayer.currentSigma = sqrt(currLayer.currentSigma * currLayer.currentSigma
+//                                         + nextLayer.currentSigma * nextLayer.currentSigma);
 
-    GrayScaleMatrix dx = Convolution::DerivateX(inputGSMatrix);
-    GrayScaleMatrix dy = Convolution::DerivateY(inputGSMatrix);
-    GrayScaleMatrix gradientDirection = Convolution::GradientDirection(dx, dy);
-    GrayScaleMatrix gradientMagnitude = Convolution::SobelOperator(dx, dy);
+            for(int ii = 0; ii < currLayer.matrix.GetWidth(); ii++)
+            {
+                for(int jj = 0; jj < currLayer.matrix.GetHeight(); jj++)
+                {
+                    currLayer.matrix.SetValue(ii,jj, abs(currLayer.matrix.GetValue(ii,jj)-nextLayer.matrix.GetValue(ii,jj)));
+                }
+            }
+            currOctave.layers.append(currLayer);
+        }
+        DoGPyramid.octaves.append(currOctave);
+    }
 
-    GrayScaleMatrix harrisMatrix = KeyFeatures::GetHarrisMatrix(inputGSMatrix, harrisRadius);
-    KeyFeatures::KeyPointSet harrisPoints = KeyFeatures::GetPointsHarris(inputGSMatrix,harrisMatrix, harrisRadius, harrisPointsNum);
+    qDebug()<<"find max and min response 3d ";
+    //теперь ищем макс отклик в 3д
+    QVector<QVector<KeyFeatures::KeyPointSet>> pyramidPoints;
+    for(int i=0; i < DoGPyramid.octaves.size(); i++)
+    {
+        QVector<KeyFeatures::KeyPointSet> octavePoints;
+        qDebug()<<"-octave "<< i;
+        //отступаем от начала и конца, чтобы иметь слой сверху и снизу.
+        for(int j=1; j < DoGPyramid.octaves[i].layers.size()-1; j++)
+        {
+            qDebug()<<"--layer "<< j;
+            ScaleOperation::Layer currDoGLayer = DoGPyramid.octaves[i].layers[j];
+            ScaleOperation::Layer currLayer = inputPyramid.octaves[i].layers[j-1];
+            KeyFeatures::KeyPointSet currDoGLayerPoints;
+            GrayScaleMatrix currHarrisMatrix = KeyFeatures::GetHarrisMatrix(currLayer.matrix, harrisRadius);
+            currHarrisMatrix.NormalizeDouble();
+            for(int ii = 0; ii < currDoGLayer.matrix.GetWidth(); ii++)
+            {
+                for(int jj = 0; jj < currDoGLayer.matrix.GetHeight(); jj++)
+                {
+                    double responseVal = currDoGLayer.matrix.GetValue(ii,jj);// значение проверяемого пикселя
+                    if(responseVal > 0.01 )//отсекаем силшком маленькие отклики
+                    {
+                        bool isMinimal = true, isMaximal = true, canContinue = true;
+                        //для трех слоев октавы
+                        for(int k = -1; k <= 1 && canContinue; k++)
+                        {
+                            //для каждого слоя окрестность вокруг точки
+                            for(int zi = -1; zi <= 1 && canContinue; zi++)
+                            {
+                                for(int zj = -1; zj <= 1 && canContinue; zj++)
+                                {
+                                    //если текущая точка окрестности не является проверяемой
+                                    if((k != 0 || zi != 0 || zj != 0))
+                                    {
+                                        //текущее значение окрестности
+                                        double tempVal = DoGPyramid.octaves[i].layers[j+k].matrix.GetValue(ii+zi,jj+zj);
+                                        //если значение в окрестности больше проверяемого,
+                                        //то преверяемое не может быть максимальным в области
+                                        if(tempVal > responseVal)
+                                            isMaximal = false;
+                                        //если значение в окрестности меньше проверяемого,
+                                        //то преверяемое не может быть минимальным в области
+                                        if(tempVal < responseVal)
+                                            isMinimal = false;
+
+                                        //если проверяемое не максимальное и не минимальное,
+                                        //то дальше проверять нет смысла
+                                        if((!isMinimal && !isMaximal))
+                                        {
+                                            canContinue = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        //если точка минимальная или максимальная в окрестности
+                        if(isMaximal || isMinimal )
+                        {
+                            if(currHarrisMatrix.GetValue(ii,jj) > 0.01)//отсекаем слабый отклик
+                            {
+                                KeyFeatures::KeyPoint currPoint(ii,jj,currHarrisMatrix.GetValue(ii,jj));
+                                currDoGLayerPoints.keyPoints.append(currPoint);
+                            }
+                        }
+                    }
+                }
+            }
+            qDebug()<<"---KeyPoints found "<< currDoGLayerPoints.keyPoints.size();
+            octavePoints.append(currDoGLayerPoints);
+        }
+        pyramidPoints.append(octavePoints);
+    }
+
+    //считаем суммарное найденое число точек в пирамиде
+    int totalPointsNum=0;
+    QVector<int> octavePointsNum;
+    for(int i=0; i < pyramidPoints.size(); i++)
+    {
+        int currOctavePointsNum = 0;
+        for(int j=0; j < pyramidPoints[i].size(); j++)
+            currOctavePointsNum += pyramidPoints[i][j].keyPoints.size();
+
+        totalPointsNum += currOctavePointsNum;
+        octavePointsNum.append(currOctavePointsNum);
+    }
+    qDebug()<<"totalPointsNum= "<< totalPointsNum;
+    qDebug()<<"Compute descriptors for pyramid ";
+    for(int i=0; i < pyramidPoints.size(); i++)
+    {
+        qDebug()<<"Octave "<<i;
+        for(int j=0; j < pyramidPoints[i].size(); j++)
+        {
+            int currLevelReducedNum = harrisPointsNum * (double)pyramidPoints[i][j].keyPoints.size() / (double)totalPointsNum;
+            qDebug()<<"---Level "<< j<<"currLevelPointsNum= "<< pyramidPoints[i][j].keyPoints.size()<<" currLevelReducedNum= "<< currLevelReducedNum;
+            int maxRadius = qMin(inputGSMatrix.GetWidth(), inputGSMatrix.GetWidth()) / 2 / pow(2, i);
+            GrayScaleMatrix dx = Convolution::DerivateX(inputPyramid.octaves[i].layers[j+1].matrix);
+            GrayScaleMatrix dy = Convolution::DerivateY(inputPyramid.octaves[i].layers[j+1].matrix);
+            GrayScaleMatrix gradientDirection = Convolution::GradientDirection(dx, dy);
+            GrayScaleMatrix gradientMagnitude = Convolution::SobelOperator(dx, dy);
+            pyramidPoints[i][j] = KeyFeatures::ReducePoints(pyramidPoints[i][j],
+                                                                      currLevelReducedNum,maxRadius);
+
+            int localHistogramGridSize = histogramGridSize * DoGPyramid.octaves[i].layers[j].currentSigma/DoGPyramid.octaves[i].layers[0].currentSigma;
+            QVector<Descriptor> layerDescriptors = GetDescriptorsFromOneLayer(gradientDirection,
+                                                                              gradientMagnitude,
+                                                                              pyramidPoints[i][j],
+                                                                              basketNum,
+                                                                              localHistogramGridSize,
+                                                                              descriptorSize);
+
+            //преобразуем координаты изображения октавы в оригинальные координаты
+            int coordMult = pow(2., i);
+            foreach(Descriptor descr, layerDescriptors)
+            {
+                int xnew = static_cast<int>(descr.GetX() * coordMult);
+                int ynew = static_cast<int>(descr.GetY() * coordMult);
+                if(xnew >= inputGSMatrix.GetWidth()) xnew = inputGSMatrix.GetWidth()-1;
+                if(ynew >= inputGSMatrix.GetHeight()) ynew =inputGSMatrix.GetHeight()-1;
+                descr.SetX(xnew);
+                descr.SetY(ynew);
+                imageDescriptor.append(descr);
+            }
+            qDebug()<<"--Layer descriptor found ";
+        }
+    }
+    qDebug()<<"Total descriptors found " << imageDescriptor.size();
+    return imageDescriptor;
+}
+
+
+
+QVector<Descriptor> DescriptorWorker::GetDescriptorsFromOneLayer(GrayScaleMatrix gradientDirection,
+                                                                 GrayScaleMatrix gradientMagnitude,
+                                                                 KeyFeatures::KeyPointSet harrisPoints,
+                                                                 int basketNum,
+                                                                 int histogramGridSize,
+                                                                 int descriptorSize)
+{
+    QVector<Descriptor> imageDescriptor;
+
+//    GrayScaleMatrix dx = Convolution::DerivateX(inputGSMatrix);
+//    GrayScaleMatrix dy = Convolution::DerivateY(inputGSMatrix);
+//    GrayScaleMatrix gradientDirection = Convolution::GradientDirection(dx, dy);
+//    GrayScaleMatrix gradientMagnitude = Convolution::SobelOperator(dx, dy);
+
+    //GrayScaleMatrix harrisMatrix = KeyFeatures::GetHarrisMatrix(inputGSMatrix, harrisRadius);
+    //KeyFeatures::KeyPointSet harrisPoints = KeyFeatures::GetPointsHarris(inputGSMatrix,harrisMatrix, harrisRadius, harrisPointsNum);
     //вычисляем уголы поворота интересных точек
     harrisPoints = DescriptorWorker::OrientPoints(harrisPoints, gradientDirection, gradientMagnitude, histogramGridSize, descriptorSize);
 
@@ -590,29 +765,6 @@ QVector<Descriptor> DescriptorWorker::GetDescriptorsWithRotation(GrayScaleMatrix
     double basketSize = 360. / basketNum;
     int descriptorRadius = descriptorSize / 2;
     int descriptorGridRadius = descriptorRadius * histogramGridSize;
-
-    //находим ядро Гаусса
-    double sigma = static_cast<double>(descriptorGridRadius) / 6;
-    QVector<QVector<double>> gaussKernel;
-    double coeff = 1 / (2 * M_PI * sigma * sigma);
-    double delitel = 2 * sigma * sigma;
-    double gaussSum = 0;
-    for (int u = -descriptorGridRadius; u <= descriptorGridRadius; u++)
-    {
-        QVector<double> gaussRow;
-        for (int v = -descriptorGridRadius; v <= descriptorGridRadius; v++)
-        {
-            double value = coeff * exp(- (u * u + v * v) / delitel);
-            gaussSum += value;
-            gaussRow.append(value);
-        }
-         gaussKernel.append(gaussRow);
-    }
-//    for (int u = -descriptorGridRadius; u <= descriptorGridRadius; u++)
-//        for (int v = -descriptorGridRadius; v <= descriptorGridRadius; v++)
-//            gaussKernel[u+descriptorGridRadius][v+descriptorGridRadius] /= gaussSum;
-
-
 
     qDebug() << "--computing histograms";
     int pointCount=0;
@@ -628,58 +780,30 @@ QVector<Descriptor> DescriptorWorker::GetDescriptorsWithRotation(GrayScaleMatrix
         {
             for(int j=-descriptorGridRadius; j<=descriptorGridRadius; j++)
             {
-                //if(sqrt(i*i+j*j) < sqrt(2)*descriptorGridRadius){
+                if(sqrt(i*i+j*j) < sqrt(2)*descriptorGridRadius){
                     //повернутые координаты для определения, в какую гистограмму писать значения
                     double angleCos = cos(angle * M_PI / 180.0);
                     double angleSin = sin(angle * M_PI / 180.0);
 
-                    double tempX = i * angleCos + j * angleSin;
-                    double tempY = j * angleCos - i * angleSin;
-                    int rotatedX = tempX;
-                    int rotatedY = tempY;
+//                    double tempX = i * angleCos + j * angleSin;
+//                    double tempY = j * angleCos - i * angleSin;
+//                    int rotatedX = tempX;
+//                    int rotatedY = tempY;
+                    double rotatedX = i * angleCos + j * angleSin;
+                    double rotatedY = j * angleCos - i * angleSin;
 
-    //                double pointAngle = atan2(rotatedY, rotatedX ); //угол, образуемый отрезком
-    //                rotatedY -= sin(pointAngle) * qMax(rotatedX - descriptorGridRadius, 0) + 0.5;
-    //                rotatedX -= cos(pointAngle) * qMax(rotatedY - descriptorGridRadius, 0) + 0.5;
-    //                if(rotatedX > descriptorGridRadius)
-    //                    rotatedX -= cos(pointAngle) * (rotatedY - descriptorGridRadius) + 0.5;
-    //                else if(rotatedX < -descriptorGridRadius)
-    //                    rotatedX -= cos(pointAngle) * (rotatedY + descriptorGridRadius) + 0.5;
+                    if(rotatedX > descriptorGridRadius)
+                        rotatedX = descriptorGridRadius;
+                    else if(rotatedX < -descriptorGridRadius)
+                        rotatedX = -descriptorGridRadius;
 
-    //                if(rotatedY > descriptorGridRadius)
-    //                    rotatedY -= cos(pointAngle) * (rotatedY - descriptorGridRadius) + 0.5;
-    //                else if(rotatedX < -descriptorGridRadius)
-    //                    rotatedX -= cos(pointAngle) * (rotatedY + descriptorGridRadius) + 0.5;
+                    if(rotatedY > descriptorGridRadius)
+                        rotatedY = descriptorGridRadius;
+                    else if(rotatedY < -descriptorGridRadius)
+                        rotatedY = - descriptorGridRadius;
 
-                        //За границей?
-                    //rotatedX += descriptorGridRadius;
-                    //rotatedY += descriptorGridRadius;
-    //                if(rotatedX < -descriptorGridRadius)
-    //                {
-    //                    rotatedX = -descriptorGridRadius;
-    //                }
-    //                else
-    //                {
-    //                    if(rotatedX > descriptorGridRadius)
-    //                    {
-    //                        rotatedX = descriptorGridRadius;
-    //                    }
-    //                }
-
-    //                if(rotatedY < -descriptorGridRadius)
-    //                {
-    //                    rotatedY = descriptorGridRadius;
-    //                }
-    //                else
-    //                {
-    //                    if(rotatedY > descriptorGridRadius)
-    //                    {
-    //                        rotatedY = descriptorGridRadius;
-    //                    }
-    //                }
-
-                    int     currX=x+rotatedX,//смещение координат в сетке
-                            currY=y+rotatedY;
+                    double     currX=x+i,//смещение координат в сетке
+                            currY=y+j;
 
                     double currDirection = gradientDirection.GetValue(currX,currY) - angle;
                     currDirection = (currDirection < 0) ? currDirection + 360 : currDirection;
@@ -716,13 +840,46 @@ QVector<Descriptor> DescriptorWorker::GetDescriptorsWithRotation(GrayScaleMatrix
 //                    b2Weight *= gaussKernel[(i+descriptorGridRadius)][(j+descriptorGridRadius)];
 
                     //определяем гистограмму, в которую записываем значение
-                    int histCol = static_cast<int>(static_cast<double>(i+descriptorGridRadius) / (histogramGridSize) - 0.2);
-                    int histRow = static_cast<int>(static_cast<double>(j+descriptorGridRadius) / (histogramGridSize) - 0.2);
-                    int currHist =  descriptorSize * histRow + histCol;
+                    double histCol = (rotatedX+descriptorGridRadius) / (histogramGridSize) - 0.1;
+                    double histRow = (rotatedY+descriptorGridRadius) / (histogramGridSize) - 0.1;
+                    int histCol1 = floor(histCol+0.5);
+                    histCol1 = histCol1 >= descriptorSize ? descriptorSize-1 : (histCol1 < 0 ? 0 : histCol1);
 
-                    pointDescriptor.addValueToBasket(currHist, basket1, currMagnitude * b1Weight);
-                    pointDescriptor.addValueToBasket(currHist, basket2, currMagnitude * b2Weight);
-                //}
+                    int histCol2 = floor(histCol-0.5);
+                    histCol2 = histCol2 >= descriptorSize ? descriptorSize-1 : (histCol2 < 0 ? 0 : histCol2);
+
+                    int histRow1 = floor(histRow+0.5);
+                    histRow1 = histRow1 >= descriptorSize ? descriptorSize-1 : (histRow1 < 0 ? 0 : histRow1);
+
+                    int histRow2 = floor(histRow-0.5);
+                    histRow2 = histRow2 >= descriptorSize ? descriptorSize-1 : (histRow2 < 0 ? 0 : histCol1);
+
+                    int hist1 = descriptorSize * histRow1 + histCol1;
+                    int hist2 = descriptorSize * histRow1 + histCol2;
+                    int hist3 = descriptorSize * histRow2 + histCol1;
+                    int hist4 = descriptorSize * histRow2 + histCol2;
+
+                    double hist1w = sqrt(pow(histCol-histCol1,2) + pow(histRow-histRow1,2));
+                    double hist2w = sqrt(pow(histCol-histCol1,2) + pow(histRow-histRow2,2));
+                    double hist3w = sqrt(pow(histCol-histCol2,2) + pow(histRow-histRow1,2));
+                    double hist4w = sqrt(pow(histCol-histCol2,2) + pow(histRow-histRow2,2));
+
+                    double sumw = hist1w + hist2w + hist3w + hist4w;
+
+//                    pointDescriptor.addValueToBasket(currHist, basket1, currMagnitude * b1Weight);
+//                    pointDescriptor.addValueToBasket(currHist, basket2, currMagnitude * b2Weight);
+                    pointDescriptor.addValueToBasket(hist1, basket1, currMagnitude * b1Weight * hist1w / sumw);
+                    pointDescriptor.addValueToBasket(hist1, basket2, currMagnitude * b2Weight * hist1w / sumw);
+
+                    pointDescriptor.addValueToBasket(hist2, basket1, currMagnitude * b1Weight * hist2w / sumw);
+                    pointDescriptor.addValueToBasket(hist2, basket2, currMagnitude * b2Weight * hist2w / sumw);
+
+                    pointDescriptor.addValueToBasket(hist3, basket1, currMagnitude * b1Weight * hist3w / sumw);
+                    pointDescriptor.addValueToBasket(hist3, basket2, currMagnitude * b2Weight * hist3w / sumw);
+
+                    pointDescriptor.addValueToBasket(hist4, basket1, currMagnitude * b1Weight * hist4w / sumw);
+                    pointDescriptor.addValueToBasket(hist4, basket2, currMagnitude * b2Weight * hist4w / sumw);
+                }
             }
         }
         pointDescriptor.NormalizeDescriptor();
@@ -732,4 +889,4 @@ QVector<Descriptor> DescriptorWorker::GetDescriptorsWithRotation(GrayScaleMatrix
     return imageDescriptor;
 
 }
-*/
+
